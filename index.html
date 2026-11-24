@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>লাইভ স্টুডিও</title>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0c0e1d;--s1:#151833;--s2:#1c2040;--line:#2b3060;--ink:#eef0ff;--mut:#9aa1d0;--live:#ff3b5c;--vio:#7c5cff;--ok:#2ee6a6;--warn:#ffb020;color-scheme:dark}
+*{box-sizing:border-box;margin:0}
+body{font-family:"Hind Siliguri",system-ui,sans-serif;color:var(--ink);line-height:1.6;min-height:100vh;background:radial-gradient(900px 500px at 85% -10%,rgba(124,92,255,.28),transparent 60%),radial-gradient(700px 500px at -10% 10%,rgba(255,59,92,.16),transparent 60%),var(--bg) fixed}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.logo{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,var(--live),var(--vio));box-shadow:0 8px 24px rgba(255,59,92,.35)}
+.logo svg{width:22px;height:22px;fill:#fff}
+header h1{font-size:1.4rem;line-height:1.2}header p{color:var(--mut);font-size:.9rem}
+.out{margin-left:8px;color:var(--mut);text-decoration:none;background:none;border:1px solid var(--line);color:var(--mut);border-radius:10px;padding:6px 12px;font:inherit;cursor:pointer}
+.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;align-items:start}
+@media(max-width:880px){.grid{grid-template-columns:1fr}}
+.stack{display:grid;gap:16px}
+.card{background:linear-gradient(180deg,var(--s1),#121530);border:1px solid var(--line);border-radius:18px;padding:18px}
+.step{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.num{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.85rem;background:rgba(124,92,255,.18);color:#b9a8ff;border:1px solid rgba(124,92,255,.5)}
+.step h2{font-size:1.05rem}
+.drop{display:block;border:2px dashed var(--line);border-radius:14px;padding:18px;text-align:center;cursor:pointer;transition:.2s}
+.drop:hover,.drop.over{border-color:var(--vio);background:rgba(124,92,255,.08)}
+.drop input{display:none}.drop strong{display:block}.drop span{color:var(--mut);font-size:.85rem}
+.bar{height:6px;background:var(--s2);border-radius:99px;overflow:hidden;margin-top:12px;display:none}
+.bar b{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--vio),var(--ok));transition:width .15s}
+.sel{color:var(--mut);font-size:.88rem;margin:14px 0 8px}
+.lib{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.vid{position:relative;background:var(--s2);border:2px solid var(--line);border-radius:12px;padding:6px;cursor:pointer;outline:none}
+.vid:hover{border-color:#4a52a0}.vid:focus-visible{outline:3px solid #b9a8ff}
+.vid.on{border-color:var(--vio);box-shadow:0 0 0 3px rgba(124,92,255,.25)}
+.th{aspect-ratio:16/9;background:#05060f;border-radius:8px;overflow:hidden;position:relative}
+.th img{width:100%;height:100%;object-fit:cover;display:block}
+.ord{position:absolute;top:5px;left:5px;min-width:22px;height:22px;border-radius:99px;background:var(--vio);font-size:.8rem;font-weight:700;display:none;place-items:center;padding:0 6px}
+.vid.on .ord{display:grid}
+.dur{position:absolute;right:5px;bottom:5px;background:rgba(0,0,0,.7);border-radius:6px;font-size:.75rem;padding:0 6px}
+.nm{font-size:.85rem;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meta{font-size:.75rem;color:var(--mut)}.meta i{font-style:normal;color:var(--ok)}
+.del{position:absolute;top:10px;right:10px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;cursor:pointer;font-size:.75rem;opacity:.85}
+.empty{color:var(--mut);font-size:.9rem;grid-column:1/-1}
+label.f{display:block;color:var(--mut);font-size:.88rem;margin:14px 0 6px}label.f:first-child{margin-top:0}
+.field{position:relative}
+input[type=password],input[type=text],input[type=datetime-local],select{width:100%;font:inherit;color:var(--ink);background:var(--s2);border:1px solid var(--line);border-radius:12px;padding:11px 14px}
+input:focus,select:focus{outline:none;border-color:var(--vio);box-shadow:0 0 0 3px rgba(124,92,255,.25)}
+.eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--mut);cursor:pointer;padding:8px;font:inherit;font-size:.8rem}
+.hint{color:var(--mut);font-size:.82rem;margin-top:6px}
+.seg{display:grid;grid-template-columns:repeat(var(--n,3),1fr);gap:8px}
+.seg label{cursor:pointer}.seg input{position:absolute;opacity:0}
+.seg span{display:block;text-align:center;padding:9px 4px;border:1px solid var(--line);border-radius:12px;background:var(--s2);font-weight:600;font-size:.92rem}
+.seg input:checked+span{background:linear-gradient(135deg,var(--vio),#5a7bff);border-color:transparent}
+.seg input:focus-visible+span{outline:3px solid #b9a8ff;outline-offset:2px}
+.tog{display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;padding:9px 0;border-top:1px solid var(--line)}
+.tog small{display:block;color:var(--mut);font-size:.8rem;line-height:1.3}
+.tog input{position:absolute;opacity:0}
+.sw{flex:0 0 auto;width:46px;height:26px;border-radius:99px;background:var(--s2);border:1px solid var(--line);position:relative;transition:.2s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s}
+.tog input:checked+.sw{background:var(--ok);border-color:var(--ok)}.tog input:checked+.sw::after{transform:translateX(20px)}
+.tog input:focus-visible+.sw{outline:3px solid #b9a8ff;outline-offset:2px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:480px){.two{grid-template-columns:1fr}}
+details{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+summary{cursor:pointer;color:#b9a8ff;font-weight:600}
+.side{position:sticky;top:16px}@media(max-width:880px){.side{position:static}}
+.pv{aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#05060f;border:1px solid var(--line);position:relative;display:grid;place-items:center}
+.pv img{width:100%;height:100%;object-fit:cover;display:none}
+.pv .ph{color:var(--mut);font-size:.88rem;padding:10px;text-align:center}
+.onair{position:absolute;top:10px;left:10px;display:none;align-items:center;gap:7px;background:var(--live);font-weight:700;font-size:.78rem;padding:2px 11px;border-radius:99px}
+.onair i{width:7px;height:7px;border-radius:50%;background:#fff;animation:pl 1.2s infinite}
+body.live .onair{display:flex}@keyframes pl{50%{opacity:.2}}
+.np{margin:12px 0 4px;font-size:.88rem;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pbar{height:4px;background:var(--s2);border-radius:99px;overflow:hidden}.pbar b{display:block;height:100%;width:0;background:var(--live);transition:width 1s linear}
+.status{display:flex;align-items:center;gap:12px;margin:14px 0}
+.ring{width:14px;height:14px;border-radius:50%;background:#59607f;flex:0 0 auto}
+body.live .ring{background:var(--live);animation:gl 1.6s infinite}
+.ring.good{background:var(--ok)!important}.ring.weak{background:var(--warn)!important}.ring.bad{background:var(--live)!important}
+@keyframes gl{0%{box-shadow:0 0 0 0 rgba(255,59,92,.6)}100%{box-shadow:0 0 0 14px rgba(255,59,92,0)}}
+.status b{display:block;font-size:1.02rem;line-height:1.2}.status small{color:var(--mut)}
+.timer{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:600;color:var(--mut)}body.live .timer{color:var(--ink)}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
+.chip{background:var(--s2);border-radius:10px;padding:6px 4px;text-align:center}
+.chip b{display:block;font-size:.92rem;line-height:1.2}.chip small{color:var(--mut);font-size:.7rem}
+.btn{width:100%;font:inherit;font-weight:700;font-size:1rem;border:0;border-radius:14px;padding:13px;cursor:pointer;color:#fff}
+.go{background:linear-gradient(135deg,var(--live),#ff7a45);box-shadow:0 10px 26px rgba(255,59,92,.35)}
+.sec{background:var(--s2);border:1px solid var(--line);margin-top:8px}
+.btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+.btn:focus-visible,.out:focus-visible{outline:3px solid #b9a8ff;outline-offset:2px}
+.console{margin-top:14px;background:#080a18;border:1px solid var(--line);border-radius:12px;padding:10px;font:.76rem/1.5 ui-monospace,Menlo,Consolas,monospace;color:#8ff0c9;white-space:pre-wrap;word-break:break-all;min-height:58px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#2a1020;border:1px solid var(--live);color:#ffd7de;padding:10px 18px;border-radius:12px;opacity:0;pointer-events:none;transition:.25s;max-width:90vw;z-index:9}
+.toast.show{opacity:1;transform:translateX(-50%)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.use{display:grid;gap:8px;margin-bottom:16px;padding:14px 18px}.use .row{display:flex;justify-content:space-between;gap:10px;font-size:.88rem;color:var(--mut)}.use .row b{color:var(--ink)}
+.ubar{height:8px;background:var(--s2);border-radius:99px;overflow:hidden}.ubar b{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ok),var(--vio));transition:width .4s}.ubar.hi b{background:linear-gradient(90deg,var(--warn),var(--live))}
+a.out{display:inline-block}[hidden]{display:none!important}header>div:nth-child(2){margin-right:auto}
+.ov{position:fixed;inset:0;z-index:20;background:var(--bg);display:grid;place-items:center;padding:24px;text-align:center}.ov[hidden]{display:none}
+.ov div{max-width:360px}.ov h2{margin-bottom:10px}.ov p{color:var(--mut);margin-bottom:8px}.ov code{display:inline-block;background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:6px 14px;font-size:1.2rem;color:var(--ink);user-select:all}
+#adminView{padding-bottom:20px}#adminView .ahead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}#adminView h2{font-size:1.2rem}
+#adminView .tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;padding-bottom:4px}
+#adminView .tabs button{flex:0 0 auto;font:inherit;font-weight:600;color:var(--mut);background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:8px 14px;cursor:pointer}
+#adminView .tabs button.on{color:#fff;background:linear-gradient(135deg,var(--vio),#5a7bff);border-color:transparent}
+#adminView .tabs i{font-style:normal;background:var(--live);color:#fff;border-radius:99px;padding:0 7px;font-size:.75rem;margin-left:5px}
+#adminView .card{margin-bottom:10px;padding:14px}
+#adminView .row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+#adminView .mut{color:var(--mut);font-size:.84rem}#adminView .ok{color:var(--ok)}#adminView .bad{color:var(--live)}
+#adminView h3{font-size:1rem;margin-bottom:8px}
+#adminView input:not([type=checkbox]){width:100%;font:inherit;color:var(--ink);background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+#adminView .ab{font:inherit;font-weight:600;color:#fff;border:0;border-radius:10px;padding:8px 14px;cursor:pointer;background:linear-gradient(135deg,var(--vio),#5a7bff)}
+#adminView .ab.r{background:linear-gradient(135deg,var(--live),#ff7a45)}#adminView .ab.g{background:var(--s2);border:1px solid var(--line)}#adminView .ab.sm{padding:5px 11px;font-size:.85rem}#adminView .ab:disabled{opacity:.4}
+#adminView .abar{height:8px;background:var(--s2);border-radius:99px;overflow:hidden;margin:8px 0 4px}#adminView .abar b{display:block;height:100%;background:linear-gradient(90deg,var(--ok),var(--vio))}#adminView .abar.hi b{background:linear-gradient(90deg,var(--warn),var(--live))}
+#adminView .badge{font-size:.75rem;border-radius:99px;padding:1px 9px;border:1px solid var(--line);color:var(--mut)}#adminView .badge.ok{color:var(--ok);border-color:var(--ok)}#adminView .badge.bad{color:var(--live);border-color:var(--live)}
+#adminView .fr{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}#adminView .fr:first-child{border-top:0}
+#adminView .fr img{width:72px;aspect-ratio:16/9;object-fit:cover;border-radius:6px;background:#05060f;flex:0 0 auto}#adminView .fr .t{flex:1;min-width:0}#adminView .fr .t b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#adminView .console{margin-top:0;max-height:300px;overflow:auto}
+#adminView dialog{background:var(--s1);color:var(--ink);border:1px solid var(--line);border-radius:18px;padding:18px;width:min(92vw,420px)}#adminView dialog::backdrop{background:rgba(0,0,0,.65)}
+#adminView .tog{margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><svg viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h7A2.5 2.5 0 0 1 16 6.5v2.8l4-2.3a.8.8 0 0 1 1.2.7v9.6a.8.8 0 0 1-1.2.7l-4-2.3v2.8a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 4 17.5z"/></svg></div>
+    <div><h1>লাইভ স্টুডিও</h1><p>ভিডিও আপলোড করুন, ইউটিউবে লাইভ করুন</p></div>
+    <button class="out" id="adminLink" type="button" hidden>অ্যাডমিন</button>
+    <button class="out" id="logout" hidden>বের হন</button>
+  </header>
+  <div id="mainView">
+  <section class="card use" id="use" hidden>
+    <div class="row"><span id="uName">-</span><span>স্টোরেজ: <b id="uTxt">-</b></span></div>
+    <div class="ubar" id="uBar"><b id="uFill"></b></div>
+    <div class="row"><span id="uLive"></span><span id="uNote"></span></div>
+  </section>
+
+  <div class="grid">
+    <div class="stack">
+      <section class="card">
+        <div class="step"><div class="num">১</div><h2>ভিডিও লাইব্রেরি</h2></div>
+        <label class="drop" id="drop">
+          <input type="file" id="file" accept="video/*" multiple>
+          <strong>ভিডিও টেনে আনুন বা ক্লিক করুন</strong>
+          <span>একসাথে কয়েকটাও দেওয়া যায়। বেছে নিলেই আপলোড শুরু হবে।</span>
+        </label>
+        <div class="bar" id="bar"><b id="barIn"></b></div>
+        <p class="sel" id="selInfo">লাইভে চালাতে ভিডিওতে চাপ দিন। একাধিক বাছলে যে ক্রমে চাপবেন সে ক্রমে চলবে।</p>
+        <div class="lib" id="lib"></div>
+      </section>
+
+      <section class="card">
+        <div class="step"><div class="num">২</div><h2>সেটিংস</h2></div>
+        <label class="f" for="key">ইউটিউব স্ট্রিম কী</label>
+        <div class="field"><input type="password" id="key" placeholder="xxxx-xxxx-xxxx-xxxx-xxxx" autocomplete="off"><button class="eye" id="eye" type="button">দেখুন</button></div>
+        <p class="hint">YouTube Studio → তৈরি করুন → লাইভ যান → স্ট্রিম। এটা গোপন রাখুন।</p>
+
+        <label class="f">কোয়ালিটি</label>
+        <div class="seg" style="--n:4">
+          <label><input type="radio" name="q" value="360"><span>360p</span></label>
+          <label><input type="radio" name="q" value="480"><span>480p</span></label>
+          <label><input type="radio" name="q" value="720" checked><span>720p</span></label>
+          <label><input type="radio" name="q" value="1080"><span>1080p</span></label>
+        </div>
+
+        <label class="f">প্রসেসিং মোড</label>
+        <div class="seg" style="--n:2">
+          <label><input type="radio" name="mode" value="encode" checked><span>সাধারণ</span></label>
+          <label><input type="radio" name="mode" value="copy"><span>কপি (কম CPU)</span></label>
+        </div>
+        <p class="hint">কপি মোডে ভিডিও আবার এনকোড হয় না, ফোন গরম হয় না। শুধু একটি H.264 + AAC ভিডিওতে চলে (লাইব্রেরিতে “কপি-সক্ষম” লেখা থাকে)। না চললে নিজে সাধারণ মোডে চলে।</p>
+
+        <div class="two">
+          <div><label class="f" for="when">কখন শুরু হবে</label>
+            <select id="when"><option value="0">এখনই</option><option value="5">৫ মিনিট পর</option><option value="30">৩০ মিনিট পর</option><option value="60">১ ঘণ্টা পর</option><option value="at">নির্দিষ্ট সময়</option></select></div>
+          <div><label class="f" for="dur">কখন বন্ধ হবে</label>
+            <select id="dur"><option value="0">নিজে বন্ধ না করা পর্যন্ত</option><option value="60">১ ঘণ্টা পর</option><option value="180">৩ ঘণ্টা পর</option><option value="360">৬ ঘণ্টা পর</option><option value="720">১২ ঘণ্টা পর</option><option value="1440">২৪ ঘণ্টা পর</option></select></div>
+        </div>
+        <div id="atWrap" hidden><label class="f" for="at">শুরুর সময়</label><input type="datetime-local" id="at"></div>
+
+        <div style="margin-top:14px">
+          <label class="tog"><div>লুপে চালান<small>ভিডিও বা প্লেলিস্ট শেষ হলে আবার শুরু</small></div><input type="checkbox" id="loop" checked><span class="sw"></span></label>
+          <label class="tog"><div>অটো-রিকানেক্ট<small>ইন্টারনেট কেটে গেলে নিজে আবার লাইভ শুরু</small></div><input type="checkbox" id="auto" checked><span class="sw"></span></label>
+          <label class="tog"><div>এলোমেলো ক্রম<small>প্লেলিস্টের ভিডিও মিশিয়ে চালান</small></div><input type="checkbox" id="shuffle"><span class="sw"></span></label>
+        </div>
+
+        <details>
+          <summary>আরও গন্তব্যে একসাথে পাঠান</summary>
+          <label class="f" for="fbkey">Facebook স্ট্রিম কী</label><input type="password" id="fbkey" autocomplete="off">
+          <label class="f" for="twkey">Twitch স্ট্রিম কী</label><input type="password" id="twkey" autocomplete="off">
+          <p class="hint">কী দিলে ইউটিউবের সঙ্গে ওই প্ল্যাটফর্মেও একই লাইভ যাবে। এতে ইন্টারনেট আপলোড বেশি লাগে না, কিন্তু ঝুঁকি বাড়ে যে এক জায়গার সমস্যা সবটা ধীর করতে পারে।</p>
+        </details>
+      </section>
+    </div>
+
+    <aside class="card side">
+      <div class="step"><div class="num">৩</div><h2>লাইভ কন্ট্রোল</h2></div>
+      <div class="pv"><img id="pvImg" alt=""><div class="ph" id="ph">ভিডিও চালু হলে এখানে দেখা যাবে</div><div class="onair"><i></i>LIVE</div></div>
+      <div class="np" id="np"></div>
+      <div class="pbar"><b id="pb"></b></div>
+
+      <div class="status">
+        <div class="ring" id="ring"></div>
+        <div><b id="stTxt">অফলাইন</b><small id="stSub">কোনো ভিডিও চলছে না</small></div>
+        <div class="timer" id="timer">00:00:00</div>
+      </div>
+      <div class="chips">
+        <div class="chip"><b id="cFps">-</b><small>fps</small></div>
+        <div class="chip"><b id="cBr">-</b><small>বিটরেট</small></div>
+        <div class="chip"><b id="cSp">-</b><small>গতি</small></div>
+        <div class="chip"><b id="cRe">0</b><small>রিকানেক্ট</small></div>
+      </div>
+
+      <button class="btn go" id="start">লাইভ শুরু করুন</button>
+      <button class="btn sec" id="stop" disabled>লাইভ বন্ধ করুন</button>
+      <button class="btn sec" id="restart" disabled>স্ট্রিম রিস্টার্ট</button>
+      <div class="console" id="log">এখনও কিছু চলছে না।</div>
+      <p class="hint">শুরুর ১০–৩০ সেকেন্ড পর YouTube Studio-তে “লাইভ যান” চাপুন।</p>
+    </aside>
+  </div>
+  </div>
+<div id="adminView" hidden>
+  <div class="ahead"><h2>অ্যাডমিন প্যানেল</h2><button class="out" id="aBack" type="button">← লাইভ স্টুডিও</button></div>
+<nav class="tabs" id="tabs">
+    <button data-t="users" class="on">ইউজার</button><button data-t="req">অনুরোধ<i id="reqN" hidden></i></button>
+    <button data-t="files">ফাইল</button><button data-t="live">লাইভ</button><button data-t="set">সেটিংস</button>
+  </nav>
+<section id="t-users">
+    <div class="card">
+      <h3>নতুন ইউজার যোগ করুন</h3>
+      <div class="two"><div><label class="f" for="nId">টেলিগ্রাম আইডি (সংখ্যা)</label><input id="nId" inputmode="numeric" placeholder="123456789"></div>
+      <div><label class="f" for="nName">নাম (ঐচ্ছিক)</label><input id="nName"></div></div>
+      <div class="two"><div><label class="f" for="nQ">স্টোরেজ (GB)</label><input id="nQ" inputmode="decimal" placeholder="ডিফল্ট"></div>
+      <div><label class="f" for="nM">সর্বোচ্চ লাইভ (মিনিট)</label><input id="nM" inputmode="numeric" placeholder="0 = সীমাহীন"></div></div>
+      <p class="mut" style="margin:8px 0">ইউজার বটে /start দিলে বা মিনি অ্যাপ খুললে “অনুরোধ” ট্যাবে আইডি দেখা যাবে, সেখান থেকেও এক ট্যাপে যোগ করা যায়।</p>
+      <button class="ab" id="nAdd">যোগ করুন</button>
+    </div>
+    <div id="uList"></div>
+  </section>
+
+  <section id="t-req" hidden><div id="rList"></div></section>
+
+  <section id="t-files" hidden>
+    <div class="card"><div class="row"><select id="fOwner" style="max-width:240px"></select><span class="mut" id="fSum"></span></div></div>
+    <div class="card" id="fList"></div>
+  </section>
+
+  <section id="t-live" hidden>
+    <div class="card"><h3>এখনকার লাইভ</h3><div id="lNow" class="mut">...</div>
+      <div class="row" style="margin-top:10px;justify-content:flex-start"><button class="ab r" id="lStop">জোর করে বন্ধ</button><button class="ab g" id="lRe">রিস্টার্ট</button></div></div>
+    <div class="card"><h3>সার্ভার লগ</h3><div class="console" id="lLog">...</div></div>
+    <div class="card"><h3>লাইভের ইতিহাস</h3><div id="lHist"></div></div>
+  </section>
+
+  <section id="t-set" hidden>
+    <div class="card"><h3>সাধারণ সেটিংস</h3>
+      <label class="f" for="sQ">নতুন ইউজারের ডিফল্ট স্টোরেজ (GB, 0 = সীমাহীন)</label><input id="sQ" inputmode="decimal">
+      <label class="tog"><div>রক্ষণাবেক্ষণ মোড<br><span class="mut">চালু করলে অ্যাডমিন ছাড়া কেউ ঢুকতে পারবে না</span></div><input type="checkbox" id="sM"><span class="sw"></span></label>
+      <button class="ab" id="sSave" style="margin-top:14px">সংরক্ষণ</button></div>
+    <div class="card"><h3>সার্ভারের অবস্থা</h3><div id="sys" class="mut">...</div></div>
+  </section>
+</div>
+
+<dialog id="dlg">
+  <h3 id="dTitle"></h3>
+  <label class="f" for="dName">নাম</label><input id="dName">
+  <label class="f" for="dNote">নোট</label><input id="dNote">
+  <div class="two"><div><label class="f" for="dQ">স্টোরেজ (GB)</label><input id="dQ" inputmode="decimal" placeholder="ডিফল্ট"></div>
+  <div><label class="f" for="dM">সর্বোচ্চ লাইভ (মিনিট)</label><input id="dM" inputmode="numeric" placeholder="0 = সীমাহীন"></div></div>
+  <p class="mut">স্টোরেজ ফাঁকা = ডিফল্ট, 0 = সীমাহীন</p>
+  <label class="tog"><div>অ্যাক্সেস চালু</div><input type="checkbox" id="dActive"><span class="sw"></span></label>
+  <label class="tog"><div>লাইভ করার অনুমতি</div><input type="checkbox" id="dStream"><span class="sw"></span></label>
+  <div class="row" style="margin-top:16px"><button class="ab" id="dSave">সংরক্ষণ</button><button class="ab g" id="dClose">বাতিল</button></div>
+  <div class="row" style="margin-top:12px"><button class="ab r sm" id="dDel">ইউজার মুছুন</button><button class="ab r sm" id="dDelF">ইউজার + সব ভিডিও মুছুন</button></div>
+</dialog>
+
+</div>
+</div>
+<div class="ov" id="ov" hidden><div id="ovBox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const radio = n => document.querySelector(`input[name=${n}]:checked`).value;
+let files = [], sel = [], st = { state: 'idle' }, upBase = 0, upAt = Date.now(), prev = 'idle';
+
+function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 3800); }
+const p2 = n => String(n).padStart(2, '0');
+const fmt = s => { s = Math.max(0, s | 0); return p2(s / 3600 | 0) + ':' + p2(s % 3600 / 60 | 0) + ':' + p2(s % 60); };
+const fdur = s => { s = s | 0; return s >= 3600 ? fmt(s) : p2(s / 60 | 0) + ':' + p2(s % 60); };
+
+const TG = window.Telegram && Telegram.WebApp;
+if (TG){ try { TG.ready(); TG.expand(); } catch {} }
+let TOKEN = ''; try { TOKEN = sessionStorage.getItem('tok') || ''; } catch {}
+let ME = null;
+const tq = () => TOKEN ? '?t=' + encodeURIComponent(TOKEN) : '';
+const fb = n => n >= 1073741824 ? (n / 1073741824).toFixed(2) + ' GB' : (n / 1048576).toFixed(n < 10485760 ? 1 : 0) + ' MB';
+async function api(p, o = {}){
+  const r = await fetch(p, { ...o, headers: { 'Content-Type': 'application/json', ...(TOKEN ? { 'X-Token': TOKEN } : {}) } });
+  if (r.status === 401) { try { sessionStorage.removeItem('tok'); } catch {} setTimeout(() => location.reload(), 300); throw new Error('সেশন শেষ, আবার লোড হচ্ছে...'); }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || 'কিছু একটা ভুল হয়েছে');
+  return j;
+}
+
+// ---------- লাইব্রেরি
+async function loadLib(){
+  try { files = await api('/library'); } catch { return; }
+  refreshMe();
+  sel = sel.filter(n => files.some(f => f.name === n));
+  renderLib();
+}
+function toggle(n){
+  const i = sel.indexOf(n);
+  i >= 0 ? sel.splice(i, 1) : sel.push(n);
+  renderLib();
+}
+function renderLib(){
+  const box = $('lib'); box.innerHTML = '';
+  if (!files.length) box.innerHTML = '<p class="empty">এখনও কোনো ভিডিও নেই।</p>';
+  files.forEach(f => {
+    const i = sel.indexOf(f.name);
+    const d = document.createElement('div');
+    d.className = 'vid' + (i >= 0 ? ' on' : ''); d.tabIndex = 0; d.setAttribute('role', 'button');
+    d.setAttribute('aria-pressed', i >= 0);
+    d.innerHTML = '<div class="th"><img loading="lazy" alt=""><span class="ord"></span><span class="dur"></span></div><div class="nm"></div><div class="meta"></div><button class="del" type="button" aria-label="মুছুন">✕</button>';
+    const img = d.querySelector('img'); img.src = '/thumb/' + encodeURIComponent(f.name) + tq(); img.onerror = () => img.remove();
+    d.querySelector('.ord').textContent = i + 1;
+    d.querySelector('.dur').textContent = f.duration ? fdur(f.duration) : '';
+    d.querySelector('.nm').textContent = f.label; d.querySelector('.nm').title = f.label;
+    const m = d.querySelector('.meta');
+    m.textContent = (f.height ? f.height + 'p ' : '') + (f.hasAudio === false ? '(অডিও নেই) ' : '');
+    if (f.copyOk){ const b = document.createElement('i'); b.textContent = 'কপি-সক্ষম'; m.appendChild(b); }
+    d.onclick = () => toggle(f.name);
+    d.onkeydown = e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === d){ e.preventDefault(); toggle(f.name); } };
+    d.querySelector('.del').onclick = async e => {
+      e.stopPropagation();
+      if (!confirm('এই ভিডিও মুছে ফেলবেন?\n' + f.label)) return;
+      try { await api('/files/' + encodeURIComponent(f.name), { method: 'DELETE' }); sel = sel.filter(x => x !== f.name); loadLib(); toast('মুছে ফেলা হয়েছে'); }
+      catch (er) { toast(er.message); }
+    };
+    box.appendChild(d);
+  });
+  $('selInfo').textContent = sel.length
+    ? `বেছে নেওয়া হয়েছে: ${sel.length}টি ভিডিও${sel.length > 1 ? ' (নম্বর অনুযায়ী পর পর চলবে)' : ''}`
+    : 'লাইভে চালাতে ভিডিওতে চাপ দিন। একাধিক বাছলে যে ক্রমে চাপবেন সে ক্রমে চলবে।';
+}
+
+// ---------- আপলোড
+function uploadOne(f){
+  return new Promise(res => {
+    if (!f.type.startsWith('video/') && !/\.(mp4|mov|mkv|webm|avi|m4v|flv|ts|3gp|wmv)$/i.test(f.name)){ toast('শুধু ভিডিও ফাইল দিন'); return res(); }
+    if (ME && ME.quotaBytes && ME.usedBytes + f.size > ME.quotaBytes){ toast('স্টোরেজ সীমা পার হয়ে যাবে (' + fb(ME.quotaBytes) + ')'); return res(); }
+    const fd = new FormData(); fd.append('video', f);
+    const x = new XMLHttpRequest();
+    $('bar').style.display = 'block'; $('barIn').style.width = '0';
+    x.upload.onprogress = e => { if (e.lengthComputable) $('barIn').style.width = (e.loaded / e.total * 100) + '%'; };
+    x.onload = () => {
+      if (x.status === 401){ location = '/login'; return res(); }
+      let j = {}; try { j = JSON.parse(x.responseText); } catch {}
+      if (x.status === 200 && j.file){ sel.push(j.file); toast('আপলোড সম্পন্ন'); } else toast(j.error || 'আপলোড ব্যর্থ হয়েছে');
+      res();
+    };
+    x.onerror = () => { toast('সার্ভারের সঙ্গে যোগাযোগ হয়নি'); res(); };
+    x.open('POST', '/upload'); if (TOKEN) x.setRequestHeader('X-Token', TOKEN); x.send(fd);
+  });
+}
+async function uploadAll(list){
+  for (const f of list) await uploadOne(f);
+  setTimeout(() => $('bar').style.display = 'none', 600);
+  loadLib();
+}
+$('file').onchange = e => { uploadAll([...e.target.files]); e.target.value = ''; };
+const drop = $('drop');
+['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => uploadAll([...e.dataTransfer.files]));
+
+// ---------- ফর্ম
+$('eye').onclick = () => {
+  const k = $('key'), show = k.type === 'password';
+  k.type = show ? 'text' : 'password'; $('eye').textContent = show ? 'লুকান' : 'দেখুন';
+};
+$('when').onchange = () => { $('atWrap').hidden = $('when').value !== 'at'; };
+
+$('start').onclick = async () => {
+  if (!sel.length) return toast('আগে অন্তত একটি ভিডিও বেছে নিন');
+  const body = {
+    files: sel, loop: $('loop').checked, autoRestart: $('auto').checked, shuffle: $('shuffle').checked,
+    quality: radio('q'), mode: radio('mode'), durationMinutes: +$('dur').value,
+  };
+  const yt = $('key').value.trim(), fb = $('fbkey').value.trim(), tw = $('twkey').value.trim();
+  if (fb || tw){
+    body.targets = [];
+    if (yt) body.targets.push({ platform: 'youtube', key: yt });
+    if (fb) body.targets.push({ platform: 'facebook', key: fb });
+    if (tw) body.targets.push({ platform: 'twitch', key: tw });
+  } else body.key = yt;
+  const w = $('when').value;
+  if (w === 'at'){
+    const v = $('at').value;
+    if (!v) return toast('শুরুর সময় বেছে নিন');
+    body.startAt = new Date(v).toISOString();
+  } else if (+w) body.delayMinutes = +w;
+  try {
+    const r = await api('/start', { method: 'POST', body: JSON.stringify(body) });
+    toast(r.scheduled ? 'লাইভ শিডিউল করা হয়েছে' : 'লাইভ শুরু হচ্ছে...');
+  } catch (e) { toast(e.message); }
+};
+$('stop').onclick = async () => { try { await api('/stop', { method: 'POST' }); } catch (e) { toast(e.message); } };
+$('restart').onclick = async () => { try { await api('/restart', { method: 'POST' }); toast('স্ট্রিম রিস্টার্ট হচ্ছে'); } catch (e) { toast(e.message); } };
+$('logout').onclick = async () => { await fetch('/logout', { method: 'POST' }); location = '/login'; };
+
+
+// ---------- স্ট্যাটাস
+function apply(s){
+  st = s; upBase = s.uptime || 0; upAt = Date.now();
+  document.body.classList.toggle('live', s.live);
+  const names = { idle: 'অফলাইন', scheduled: 'শিডিউল করা আছে', live: 'লাইভ চলছে', reconnecting: 'আবার সংযোগ হচ্ছে...', busy: 'অন্য কেউ লাইভ চালাচ্ছে' };
+  $('stTxt').textContent = names[s.state] || s.state;
+  const np = s.nowPlaying;
+  $('stSub').textContent = s.state === 'scheduled' && s.scheduledFor
+    ? 'শুরু হবে: ' + new Date(s.scheduledFor).toLocaleString()
+    : (s.state === 'busy' ? 'চালাচ্ছেন: ' + (s.busyBy || '—') : (np ? np.label : 'কোনো ভিডিও চলছে না'));
+  $('ring').className = 'ring' + (s.live && s.health && s.health !== 'starting' ? ' ' + s.health : '');
+  $('start').disabled = s.state !== 'idle' || !!(ME && !ME.canStream);
+  $('stop').disabled = s.state === 'idle' || s.state === 'busy';
+  $('stop').textContent = s.state === 'scheduled' ? 'শিডিউল বাতিল করুন' : 'লাইভ বন্ধ করুন';
+  $('restart').disabled = !s.live;
+  if (s.state === 'busy') { $('np').textContent = ''; }
+
+  if (np){
+    $('np').textContent = (np.count > 1 ? `${np.index}/${np.count}  ` : '') + np.label + (s.mode === 'copy' ? '  (কপি মোড)' : '');
+    $('pb').style.width = np.duration ? Math.min(100, np.pos / np.duration * 100) + '%' : '0';
+    $('pvImg').src = '/thumb/' + encodeURIComponent(np.name) + tq();
+    $('pvImg').style.display = 'block'; $('ph').style.display = 'none';
+  } else {
+    $('np').textContent = ''; $('pb').style.width = '0';
+    $('pvImg').style.display = 'none'; $('ph').style.display = 'block';
+  }
+  const x = s.stats || {};
+  $('cFps').textContent = x.fps ? Math.round(x.fps) : '-';
+  $('cBr').textContent = x.bitrate ? x.bitrate.replace('kbits/s', 'k') : '-';
+  $('cSp').textContent = x.speed ? x.speed.toFixed(2) + 'x' : '-';
+  $('cRe').textContent = s.restarts || 0;
+  if (s.log && s.log.length) $('log').textContent = s.log.join('\n');
+  if (prev !== 'idle' && s.state === 'idle') loadLib();
+  prev = s.state;
+}
+async function poll(){ try { apply(await api('/status')); } catch {} }
+setInterval(() => { $('timer').textContent = st.live ? fmt(upBase + (Date.now() - upAt) / 1000) : '00:00:00'; }, 1000);
+
+function startLive(){
+  if (window.EventSource){
+    const es = new EventSource('/events' + tq());
+    es.onmessage = e => { try { apply(JSON.parse(e.data)); } catch {} };
+    setInterval(poll, 10000);
+  } else setInterval(poll, 3000);
+}
+
+// ---------- অ্যাডমিন প্যানেল
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ago = t => { if (!t) return 'কখনো না'; const m = (Date.now() - t) / 60000; return m < 1 ? 'এইমাত্র' : m < 60 ? (m | 0) + ' মিনিট আগে' : m < 1440 ? (m / 60 | 0) + ' ঘণ্টা আগে' : (m / 1440 | 0) + ' দিন আগে'; };
+const post = (p, b, m = 'POST') => api(p, { method: m, body: JSON.stringify(b || {}) });
+const guard = fn => async (...a) => { try { await fn(...a); } catch (e) { toast(e.message); } };
+function setView(admin){
+  $('adminView').hidden = !admin; $('mainView').hidden = admin;
+  if (admin) aShow('users'); else clearInterval(aTimer);
+  window.scrollTo(0, 0);
+}
+$('adminLink').onclick = () => setView(true);
+$('aBack').onclick = () => setView(false);
+let aTimer = null;
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => aShow(b.dataset.t));
+function aShow(t){
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  ['users', 'req', 'files', 'live', 'set'].forEach(x => $('t-' + x).hidden = x !== t);
+  clearInterval(aTimer);
+  ({ users: loadUsers, req: loadUsers, files: loadFiles, live: loadLive, set: loadSet })[t]();
+  if (t === 'live') aTimer = setInterval(loadLive, 3000);
+}
+
+// ---------- ইউজার
+let DATA = null, cur = null;
+const quotaTxt = u => { const g = u.quotaGB == null ? DATA.defaultQuotaGB : u.quotaGB; return g > 0 ? g * 1073741824 : 0; };
+const usageHtml = (u, q) => {
+  const pct = q ? Math.min(100, u.bytes / q * 100) : 0;
+  return `<div class="abar ${pct > 85 ? 'hi' : ''}"><b style="width:${pct}%"></b></div><div class="mut">স্টোরেজ: ${fb(u.bytes)} / ${q ? fb(q) : 'সীমাহীন'} · ভিডিও: ${u.files}টি</div>`;
+};
+const loadUsers = guard(async () => {
+  DATA = await api('/admin/users');
+  const n = DATA.requests.length; $('reqN').hidden = !n; $('reqN').textContent = n;
+  let h = DATA.admins.map(a => `<div class="card"><div class="row"><b>${esc(a.name)}</b><span class="badge ok">অ্যাডমিন</span></div><div class="mut">আইডি: ${esc(a.id)}</div>${usageHtml(a, 0)}</div>`).join('');
+  h += DATA.users.map(u => {
+    const q = quotaTxt(u);
+    return `<div class="card"><div class="row"><b>${esc(u.name || u.id)} ${u.username ? '<span class="mut">@' + esc(u.username) + '</span>' : ''}</b>
+      <span class="badge ${u.active ? 'ok' : 'bad'}">${u.active ? 'চালু' : 'বন্ধ'}</span></div>
+      <div class="mut">আইডি: ${esc(u.id)} · শেষ দেখা: ${ago(u.lastSeen)}${u.note ? ' · ' + esc(u.note) : ''}</div>
+      ${usageHtml(u, q)}
+      <div class="row"><span class="mut">মোট লাইভ: ${fmt(u.streamSeconds || 0)}${u.maxStreamMinutes ? ' · সীমা ' + u.maxStreamMinutes + ' মি.' : ''}${u.canStream ? '' : ' · <span class="bad">লাইভ নিষেধ</span>'}</span>
+      <span><button class="ab sm g" onclick="toggleActive('${u.id}',${!u.active})">${u.active ? 'বন্ধ করুন' : 'চালু করুন'}</button> <button class="ab sm" onclick="edit('${u.id}')">এডিট</button></span></div></div>`;
+  }).join('');
+  if (DATA.orphan) h += `<div class="card"><b>মালিকহীন ফাইল</b><div class="mut">${DATA.orphan.files}টি · ${fb(DATA.orphan.bytes)} (আগের আপলোড, শুধু অ্যাডমিন দেখে)</div></div>`;
+  $('uList').innerHTML = h || '<p class="mut">কোনো ইউজার নেই।</p>';
+  $('rList').innerHTML = DATA.requests.map(r => `<div class="card"><div class="row"><b>${esc(r.name)} ${r.username ? '<span class="mut">@' + esc(r.username) + '</span>' : ''}</b><span class="mut">${ago(r.at)}</span></div>
+    <div class="mut">আইডি: ${esc(r.id)}</div><div class="row" style="margin-top:8px;justify-content:flex-start"><button class="ab sm" onclick="approve('${r.id}')">অনুমতি দিন</button><button class="ab sm g" onclick="dismiss('${r.id}')">বাদ দিন</button></div></div>`).join('') || '<p class="mut">কোনো নতুন অনুরোধ নেই।</p>';
+});
+window.approve = guard(async id => { await post('/admin/users', { id }); toast('ইউজার যোগ হয়েছে'); loadUsers(); });
+window.dismiss = guard(async id => { await post('/admin/requests/' + id, {}, 'DELETE'); loadUsers(); });
+window.toggleActive = guard(async (id, v) => { await post('/admin/users/' + id, { active: v }, 'PATCH'); loadUsers(); });
+$('nAdd').onclick = guard(async () => {
+  const b = { id: $('nId').value.trim(), name: $('nName').value.trim(), quotaGB: $('nQ').value, maxStreamMinutes: $('nM').value };
+  await post('/admin/users', b);
+  ['nId', 'nName', 'nQ', 'nM'].forEach(i => $(i).value = ''); toast('ইউজার যোগ হয়েছে'); loadUsers();
+});
+window.edit = id => {
+  const u = DATA.users.find(x => x.id === id); cur = id;
+  $('dTitle').textContent = (u.name || id) + ' (' + id + ')';
+  $('dName').value = u.name || ''; $('dNote').value = u.note || '';
+  $('dQ').value = u.quotaGB == null ? '' : u.quotaGB; $('dM').value = u.maxStreamMinutes || '';
+  $('dActive').checked = u.active; $('dStream').checked = u.canStream;
+  $('dlg').showModal();
+};
+$('dClose').onclick = () => $('dlg').close();
+$('dSave').onclick = guard(async () => {
+  await post('/admin/users/' + cur, { name: $('dName').value, note: $('dNote').value, quotaGB: $('dQ').value, maxStreamMinutes: $('dM').value, active: $('dActive').checked, canStream: $('dStream').checked }, 'PATCH');
+  $('dlg').close(); toast('সংরক্ষিত'); loadUsers();
+});
+const del = files => guard(async () => {
+  if (!confirm(files ? 'ইউজার ও তার সব ভিডিও মুছে যাবে। নিশ্চিত?' : 'ইউজার মুছে যাবে (ভিডিও থাকবে)। নিশ্চিত?')) return;
+  const r = await post('/admin/users/' + cur + (files ? '?files=1' : ''), {}, 'DELETE');
+  $('dlg').close(); toast('মুছে ফেলা হয়েছে' + (r.removed ? ` (${r.removed}টি ভিডিও)` : '')); loadUsers();
+});
+$('dDel').onclick = del(false); $('dDelF').onclick = del(true);
+
+// ---------- ফাইল
+let LIB = [];
+const loadFiles = guard(async () => {
+  LIB = await api('/library');
+  const owners = [...new Map(LIB.map(f => [f.owner || '', f.ownerName])).entries()];
+  const old = $('fOwner').value;
+  $('fOwner').innerHTML = '<option value="*">সব ইউজার</option>' + owners.map(([id, n]) => `<option value="${esc(id)}">${esc(n)}</option>`).join('');
+  if ([...$('fOwner').options].some(o => o.value === old)) $('fOwner').value = old;
+  renderFiles();
+});
+$('fOwner').onchange = () => renderFiles();
+function renderFiles(){
+  const o = $('fOwner').value, list = LIB.filter(f => o === '*' || (f.owner || '') === o);
+  $('fSum').textContent = list.length + 'টি · ' + fb(list.reduce((a, f) => a + f.size, 0));
+  $('fList').innerHTML = list.map(f => `<div class="fr"><img loading="lazy" src="/thumb/${encodeURIComponent(f.name)}${tq()}" alt="" onerror="this.style.visibility='hidden'">
+    <div class="t"><b title="${esc(f.label)}">${esc(f.label)}</b><span class="mut">${fb(f.size)} · ${esc(f.ownerName)}${f.inUse ? ' · <span class="bad">লাইভে</span>' : ''}</span></div>
+    <button class="ab sm r" ${f.inUse ? 'disabled' : ''} onclick="delFile('${encodeURIComponent(f.name)}')">মুছুন</button></div>`).join('') || '<p class="mut">কোনো ফাইল নেই।</p>';
+}
+window.delFile = guard(async n => { if (!confirm('ভিডিওটি মুছে ফেলবেন?')) return; await post('/files/' + n, {}, 'DELETE'); toast('মুছে ফেলা হয়েছে'); loadFiles(); });
+
+// ---------- লাইভ
+const STN = { idle: 'অফলাইন', scheduled: 'শিডিউল করা', live: 'লাইভ চলছে', reconnecting: 'আবার সংযোগ হচ্ছে' };
+const loadLive = guard(async () => {
+  const [s, logs, hist] = await Promise.all([api('/status'), api('/logs?n=80'), api('/history')]);
+  const x = s.stats || {};
+  $('lNow').innerHTML = `<b class="${s.live ? 'ok' : ''}">${STN[s.state] || s.state}</b>` + (s.state !== 'idle' ? `<br>ইউজার: ${esc(s.ownerName || '—')}<br>ভিডিও: ${esc(s.nowPlaying ? s.nowPlaying.label : '-')}<br>চলছে: ${fmt(s.uptime)} · গতি: ${x.speed ? x.speed.toFixed(2) + 'x' : '-'} · fps: ${x.fps ? Math.round(x.fps) : '-'} · রিকানেক্ট: ${s.restarts}<br>গন্তব্য: ${esc((s.targets || []).join(', '))}` : '');
+  $('lStop').disabled = s.state === 'idle'; $('lRe').disabled = !s.live;
+  const L = $('lLog'), bottom = L.scrollTop + L.clientHeight >= L.scrollHeight - 30;
+  L.textContent = logs.join('\n') || 'কিছু নেই'; if (bottom) L.scrollTop = L.scrollHeight;
+  $('lHist').innerHTML = hist.slice(0, 30).map(h => `<div class="fr"><div class="t"><b>${esc(h.ownerName || '—')}</b><span class="mut">${new Date(h.start).toLocaleString()} · ${fmt(h.seconds)} · ${esc((h.targets || []).join('+'))} · ${esc(h.reason)}</span></div></div>`).join('') || '<p class="mut">এখনও কোনো ইতিহাস নেই।</p>';
+});
+$('lStop').onclick = guard(async () => { if (!confirm('চলমান লাইভ বন্ধ করবেন?')) return; await post('/stop'); toast('বন্ধ করা হচ্ছে'); setTimeout(loadLive, 800); });
+$('lRe').onclick = guard(async () => { await post('/restart'); toast('রিস্টার্ট হচ্ছে'); });
+
+// ---------- সেটিংস
+const loadSet = guard(async () => {
+  const [st, sy, me] = await Promise.all([api('/admin/settings'), api('/system'), api('/me')]);
+  $('sQ').value = st.defaultQuotaGB; $('sM').checked = st.maintenance;
+  const d = sy.disk;
+  $('sys').innerHTML = [
+    d ? `ডিস্ক: ${fb(d.total - d.free)} ব্যবহৃত / ${fb(d.total)} (ফাঁকা ${fb(d.free)})` : '',
+    `সব আপলোড মিলিয়ে: ${fb(sy.uploadsBytes)}`,
+    `র‍্যাম ফাঁকা: ${fb(sy.mem.free)} / ${fb(sy.mem.total)}`,
+    `CPU লোড: ${sy.load.map(v => v.toFixed(2)).join(' / ')} (${sy.cpus} কোর)`,
+    `সার্ভার চালু: ${fmt(sy.uptime)} · Node ${esc(sy.node)}`,
+    `সর্বোচ্চ আপলোড (প্রতি ফাইল): ${st.maxUploadGB} GB`,
+  ].filter(Boolean).join('<br>');
+});
+$('sSave').onclick = guard(async () => { await post('/admin/settings', { defaultQuotaGB: $('sQ').value, maintenance: $('sM').checked }); toast('সংরক্ষিত'); });
+
+// ---------- শুরু
+
+// ---------- লগইন (টেলিগ্রাম মিনি অ্যাপ)
+function overlay(h){ $('ovBox').innerHTML = h; $('ov').hidden = false; }
+async function doLogin(){
+  if (TOKEN){ const r = await fetch('/me', { headers: { 'X-Token': TOKEN } }); if (r.ok) return r.json(); TOKEN = ''; }
+  if (TG && TG.initData){
+    const r = await fetch('/auth/tg', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ initData: TG.initData }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw { denied: true, ...j };
+    TOKEN = j.token; try { sessionStorage.setItem('tok', TOKEN); } catch {}
+    return api('/me');
+  }
+  const r = await fetch('/me');
+  if (r.ok) return r.json();
+  const h = await fetch('/health').then(x => x.json()).catch(() => ({}));
+  if (h.pw){ location = '/login'; throw { silent: true }; }
+  throw { notTg: true };
+}
+function renderUse(){
+  if (!ME) return;
+  $('use').hidden = false;
+  $('uName').textContent = ME.name + (ME.admin ? ' (অ্যাডমিন)' : '');
+  const q = ME.quotaBytes, pct = q ? Math.min(100, ME.usedBytes / q * 100) : 0;
+  $('uTxt').textContent = fb(ME.usedBytes) + ' / ' + (q ? fb(q) : 'সীমাহীন');
+  $('uFill').style.width = (q ? pct : 0) + '%';
+  $('uBar').classList.toggle('hi', pct > 85);
+  $('uLive').textContent = 'মোট লাইভ: ' + fmt(ME.streamSeconds || 0);
+  $('uNote').textContent = !ME.canStream ? 'লাইভ করার অনুমতি নেই' : (ME.maxStreamMinutes ? 'সর্বোচ্চ লাইভ: ' + ME.maxStreamMinutes + ' মিনিট' : '');
+}
+async function refreshMe(){ try { ME = await api('/me'); renderUse(); } catch {} }
+
+// ---------- শুরু
+(async () => {
+  try { ME = await doLogin(); }
+  catch (e) {
+    if (e.silent) return;
+    if (e.denied) return overlay(e.blocked
+      ? '<h2>অ্যাক্সেস বন্ধ</h2><p>আপনার অ্যাক্সেস অ্যাডমিন বন্ধ করে দিয়েছেন।</p><p>আপনার টেলিগ্রাম আইডি:</p><code>' + e.id + '</code>'
+      : '<h2>অনুমতি নেই</h2><p>এই বট শুধু অনুমোদিত ব্যবহারকারীরা চালাতে পারেন। অনুরোধ অ্যাডমিনের কাছে পাঠানো হয়েছে।</p><p>আপনার টেলিগ্রাম আইডি:</p><code>' + e.id + '</code><p style="margin-top:10px">এই আইডি অ্যাডমিনকে দিন।</p>');
+    return overlay('<h2>টেলিগ্রাম থেকে খুলুন</h2><p>এই অ্যাপ শুধু টেলিগ্রাম মিনি অ্যাপ হিসেবে চলে।</p>');
+  }
+  renderUse(); startLive();
+  if (ME.admin) $('adminLink').hidden = false;
+  await loadLib();
+  poll();
+  try {
+    const l = await api('/last');
+    if (l.quality) document.querySelector(`input[name=q][value="${l.quality}"]`)?.click();
+    if (l.mode) document.querySelector(`input[name=mode][value="${l.mode}"]`)?.click();
+    if (typeof l.loop === 'boolean') $('loop').checked = l.loop;
+    if (typeof l.autoRestart === 'boolean') $('auto').checked = l.autoRestart;
+    if (!sel.length && Array.isArray(l.files)){ sel = l.files.filter(n => files.some(f => f.name === n)); renderLib(); }
+  } catch {}
+  if (ME.auth && !(TG && TG.initData)) $('logout').hidden = false;
+})();
+</script>
+</body>
+</html>
